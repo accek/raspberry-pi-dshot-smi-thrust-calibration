@@ -6,9 +6,11 @@ Raspberry Pi Zero 2, other version of may not work.
 Comparing to a simple implementation based on busy wait loop this
 implementation is using SMI interface and DMA to generate dshot
 protocol. It is less CPU consuming and works well even if CPU is
-loaded by other tasks.
+loaded by other tasks. However, it is more hardware dependent and can
+not generate Dshot signal on any GPIO pin. It works for pins between
+GPIO 8 and GPIO 25 (18 pins max).
 
-SMI and DMA implementation is using Jeremy Benthem work
+SMI and DMA implementation is based on Jeremy Benthem work
 https://iosoft.blog/category/secondary-memory-interface/.
 
 To compile and run a simple test that spins 4 motors, type
