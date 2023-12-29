@@ -1,22 +1,21 @@
 
 This is an implementation of the DSHOT protocol to control ESCs
 via the GPIO pins of a Raspberry Pi.  It was developed and used on
-Raspberry Pi Zero 2, other versions of Raspberry Pi may not work.
+Raspberry Pi Zero 2, other versions were not tested.
 
-Compared to our older implementation based on busy wait loop this
+Comparing to a simple implementation based on busy wait loop this
 implementation is using SMI interface and DMA to generate dshot
 protocol. It is less CPU consuming and works well even if CPU is
-loaded by other tasks. However, it is more hardware dependent and
-usable GPIO pins are restricted to pins between GPIO 8 and GPIO 25 (18
-pins max).
+loaded by other tasks.
 
-SMI and DMA implementation is based on Jeremy Benthem work
+SMI and DMA implementation is using Jeremy Benthem work
 https://iosoft.blog/category/secondary-memory-interface/.
 
-To compile and run a simple test that spins 4 motors, type
+To compile and run a simple test that spins 4 motors connected to GPIO
+pins 16, 19, 20 and 21, type
 
     	   make test
-	   sudo ./test
+	   sudo ./test 16 19 20 21
 
 If it does not work, you may need to edit 'motor-dshot-smi.c' and adjust
 DSHOT_VERSION and/or DSHOT_SMI_TIMING macro.
