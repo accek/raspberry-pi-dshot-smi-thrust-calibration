@@ -261,11 +261,14 @@ void dma_wait(int chan);
 // If any of these fail, program will be terminated
 void map_devices(void)
 {
+    int i;
     map_periph(&gpio_regs, (void *)GPIO_BASE, PAGE_SIZE);
     map_periph(&dma_regs, (void *)DMA_BASE, PAGE_SIZE);
     map_periph(&clk_regs, (void *)CLK_BASE, PAGE_SIZE);
     map_periph(&smi_regs, (void *)SMI_BASE, PAGE_SIZE);
-    memset(smi_regs.virt, 0, SMI_REGLEN);
+    // memset causes 'Bus error' on 64-bit OS, that is why there is a loop
+    // memset(smi_regs.virt, 0, SMI_REGLEN);
+    for(i=0; i<SMI_REGLEN; i++) ((char*)smi_regs.virt)[i] = 0;
 }
 
 // Catastrophic failure in initial setup
@@ -396,6 +399,8 @@ void dshotSendFrames(int motorPins[], int motorMax, unsigned frame[]) {
     cbs = vc_mem.virt;
     txdata = (uint32_t *)(cbs+1);
 
+    // There is something wrong with this memory, you cannot access it with non-64 bit aligned access on 64bit os.
+
     // compute masks for zero bits in all frames
     j = 0;
     for(bi=0; bi<16; bi++) {
@@ -426,7 +431,7 @@ static int dshotAddChecksumAndTelemetry(int packet, int telem) {
     return ((packet_telemetry << 4) | csum);
 }
 
-static uint32_t getRpiRegBase(void) {
+static uintptr_t getRpiRegBase(void) {
     const char *revision_file = "/proc/device-tree/system/linux,revision";
     uint8_t revision[4] = { 0 };
     uint32_t cpu = 4;
@@ -501,10 +506,12 @@ void motorImplementationInitialize(int motorPins[], int motorMax) {
     // Precompute 'zero' dhsot frame
     cbs = vc_mem.virt;
     txdata = (uint32_t *)(cbs+1);
+    // There is something wrong with this memory, you cannot access it with non-64 bit aligned access on 64bit os.
     j = 0;
     for(i=0; i<16; i++) {
-	for(k=0; k<3;k++) txdata[j++] = 0xffffffff;
-	for(k=0; k<5;k++) txdata[j++] = 0;
+      for(k=0; k<3;k++) txdata[j++] = 0xffffffff;
+      for(k=0; k<3;k++) j++;
+      for(k=0; k<2;k++) txdata[j++] = 0;
     }
 
     for (i=0; i<motorMax; i++) gpio_mode(motorPins[i], GPIO_ALT1);
