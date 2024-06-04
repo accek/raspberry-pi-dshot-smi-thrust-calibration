@@ -43,7 +43,7 @@
 
 
 #ifndef DSHOT_VERSION
-#define DSHOT_VERSION 300
+#define DSHOT_VERSION 600
 #endif
 
 
@@ -129,7 +129,8 @@ enum {
 };
 
 #define DSHOT_NUM_PINS 		18
-#define DSHOT_BROADCAST_BYTES 	(8*16*4)
+// total length of transfer is 4 bytes x 8 bytes per dshot bit x 17 (16 bits in dshot frame plus initial zero bit)
+#define DSHOT_BROADCAST_BYTES 	(8*17*4)
 
 
 
@@ -245,8 +246,7 @@ volatile SMI_DCS_REG *smi_dcs;
 volatile SMI_DCA_REG *smi_dca;
 volatile SMI_DCD_REG *smi_dcd;
 
-#define TX_SAMPLE_SIZE  1       // Number of raw bytes per sample
-#define VC_MEM_SIZE(ns) 	(PAGE_SIZE + ((ns)+4)*TX_SAMPLE_SIZE)
+#define VC_MEM_SIZE(ns) 	(PAGE_SIZE + ns)
 
 //uint8_t sample_buff[NSAMPLES];
 
@@ -398,6 +398,8 @@ void dshotSendFrames(int motorPins[], int motorMax, unsigned frame[]) {
 
     cbs = vc_mem.virt;
     txdata = (uint32_t *)(cbs+1);
+    // Skip the initial 'zero' byte
+    txdata += 8;
 
     // There is something wrong with this memory, you cannot access it with non-64 bit aligned access on 64bit os.
 
@@ -508,6 +510,9 @@ void motorImplementationInitialize(int motorPins[], int motorMax) {
     txdata = (uint32_t *)(cbs+1);
     // There is something wrong with this memory, you cannot access it with non-64 bit aligned access on 64bit os.
     j = 0;
+    // first 'byte' will always be zero.
+    // This hack removes strange irregularity on first byte signal probably due to dma not fast enough at the beginning
+    for(k=0; k<8; k++) txdata[j++] = 0;
     for(i=0; i<16; i++) {
       for(k=0; k<3;k++) txdata[j++] = 0xffffffff;
       for(k=0; k<3;k++) j++;
