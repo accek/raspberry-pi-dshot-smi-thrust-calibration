@@ -129,7 +129,8 @@ enum {
 };
 
 #define DSHOT_NUM_PINS 		18
-// total length of transfer is 4 bytes x 8 bytes per dshot bit x 17 (16 bits in dshot frame plus initial zero bit)
+// total length of transfer is 4 bytes (32 possible pins) x 8 bytes (to transfer 1 dshot bit) x 17
+// (16 bits in dshot frame plus one initial zero bit)
 #define DSHOT_BROADCAST_BYTES 	(8*17*4)
 
 
@@ -398,7 +399,7 @@ void dshotSendFrames(int motorPins[], int motorMax, unsigned frame[]) {
 
     cbs = vc_mem.virt;
     txdata = (uint32_t *)(cbs+1);
-    // Skip the initial 'zero' byte
+    // Skip the initial 'zero' bit
     txdata += 8;
 
     // There is something wrong with this memory, you cannot access it with non-64 bit aligned access on 64bit os.
@@ -510,8 +511,8 @@ void motorImplementationInitialize(int motorPins[], int motorMax) {
     txdata = (uint32_t *)(cbs+1);
     // There is something wrong with this memory, you cannot access it with non-64 bit aligned access on 64bit os.
     j = 0;
-    // first 'byte' will always be zero.
-    // This hack removes strange irregularity on first byte signal probably due to dma not fast enough at the beginning
+    // first 'bit' will always be zero.
+    // This hack removes strange irregularity on first bit signal probably due to dma not fast enough at the beginning
     for(k=0; k<8; k++) txdata[j++] = 0;
     for(i=0; i<16; i++) {
       for(k=0; k<3;k++) txdata[j++] = 0xffffffff;
