@@ -1,9 +1,10 @@
 
 This is an implementation of the DSHOT protocol to control ESCs via
-the GPIO pins of a Raspberry Pi.  It was developed and used on
-Raspberry Pi Zero 2, other versions were not tested. It may not work
-safely on 64-bit OS. It also requires to configure vc4-kms-v3d driver
-instead of vc4-fkms-v3d in /boot/firmware/config.txt.
+the GPIO pins of a Raspberry Pi.  It works with 32-bit OS on Raspberry
+Pi 3, 4 and Zero 2, other versions were not tested. It may not work
+safely on 64-bit OS. It also does not work with vc4-fkms-v3d
+driver. You have to change it to vc4-kms-v3d if configured in
+/boot/firmware/config.txt.
 
 Comparing to a simple implementation based on busy wait loop this
 implementation is using SMI interface and DMA to generate dshot
