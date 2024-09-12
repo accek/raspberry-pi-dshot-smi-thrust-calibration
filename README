@@ -6,6 +6,9 @@ on Raspberry Pi 5. It may not work safely on 64-bit OS. It also does
 not work with vc4-fkms-v3d driver. You have to change it to
 vc4-kms-v3d if configured in /boot/firmware/config.txt.
 
+There is a restriction to GPIO pins where ESC can be connected. It
+works for pins between GPIO 8 and GPIO 25 only!
+
 Comparing to a simple implementation based on busy wait loop this
 implementation is using SMI interface and DMA to generate dshot
 protocol. It is less CPU consuming and works well even if CPU is
