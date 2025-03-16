@@ -39,11 +39,11 @@
 
 //////////////////////////////////////////////////////////////////////
 // Select the dshot version you want to use. Value may be 150, 300,
-// 600 or 1200. 
+// 600 or 1200.
 
 
 #ifndef DSHOT_VERSION
-#define DSHOT_VERSION 600
+#define DSHOT_VERSION 150
 #endif
 
 
@@ -86,7 +86,7 @@
 
 #endif
 
-    
+
 #include <stdio.h>
 #include <signal.h>
 #include <stdint.h>
@@ -191,7 +191,7 @@ char *smi_regstrs[] = {
 #define SMI_CS_FIELDS \
     enable:1, done:1, active:1, start:1, clear:1, write:1, _x1:2,\
     teen:1, intd:1, intt:1, intr:1, pvmode:1, seterr:1, pxldat:1, edreq:1,\
-    _x2:8, _x3:1, aferr:1, txw:1, rxr:1, txd:1, rxd:1, txe:1, rxf:1  
+    _x2:8, _x3:1, aferr:1, txw:1, rxr:1, txd:1, rxd:1, txe:1, rxf:1
 REG_DEF(SMI_CS_REG, SMI_CS_FIELDS);
 #define SMI_L_FIELDS \
     len:32
@@ -275,7 +275,7 @@ void map_devices(void)
 // Catastrophic failure in initial setup
 void fail(char *s)
 {
-    printf(s);
+    printf("%s", s);
     unmap_devices(0);
 }
 
@@ -284,7 +284,7 @@ void unmap_devices(int sig)
 {
     printf("debug: Motor-dshot-smi Closing\n");
     unmap_periph_mem(&smi_regs);
-    unmap_periph_mem(&clk_regs); // it was not there, but probably shall unmap too?    
+    unmap_periph_mem(&clk_regs); // it was not there, but probably shall unmap too?
     unmap_periph_mem(&dma_regs);
     unmap_periph_mem(&gpio_regs);
 }
@@ -365,7 +365,7 @@ static void dshotDmaSmiSend() {
     stop_dma(DMA_CHAN_A);
 
     // Start the new transfer
-    smi_dsr->rwidth = SMI_8_BITS; 
+    smi_dsr->rwidth = SMI_8_BITS;
     smi_l->len = sample_count;
     smi_dmc->dmaen = 1;
     smi_cs->write = 1;
@@ -383,7 +383,7 @@ static void dshotDmaSmiSend() {
     cbs[0].next_cb = 0;
     start_dma(&vc_mem, DMA_CHAN_A, &cbs[0], 0);
     smi_cs->start = 1;
-    
+
     previousTransfer = 1;
     //dma_wait(DMA_CHAN_A);
     //if (smi_regs.virt) *REG32(smi_regs, SMI_CS) = 0;
@@ -408,15 +408,15 @@ void dshotSendFrames(int motorPins[], int motorMax, unsigned frame[]) {
     j = 0;
     for(bi=0; bi<16; bi++) {
         bit = (0x8000 >> bi);
-	msk = 0;
+        msk = 0;
         for(i=0; i<motorMax; i++) {
             if ((frame[i] & bit) != 0) msk |= (1<<(motorPins[i]-DAC_D0_PIN));
         }
-	// 1 dshot bit is 'encoded' into 8 values 3*d0L + 3*data + 2*padding
-	j = bi * 8 + 3;
-	txdata[j++] = msk;
-	txdata[j++] = msk;
-	txdata[j++] = msk;
+        // 1 dshot bit is 'encoded' into 8 values 3*d0L + 3*data + 2*padding
+        j = bi * 8 + 3;
+        txdata[j++] = msk;
+        txdata[j++] = msk;
+        txdata[j++] = msk;
     }
     dshotDmaSmiSend();
 }
@@ -488,10 +488,10 @@ void motorImplementationInitialize(int motorPins[], int motorMax) {
 	    exit(-1);
 	}
     }
-    
+
     rpiRegBase = getRpiRegBase();
     map_devices();
-    
+
     signal(SIGINT, unmap_devices);
 
     // Initialize SMI to Dshot timing
@@ -525,16 +525,16 @@ void motorImplementationInitialize(int motorPins[], int motorMax) {
 
 void motorImplementationFinalize(int motorPins[], int motorMax) {
     int i;
-    
+
     printf("debug: motorImplementationFinalize\n");
     stop_dma(DMA_CHAN_A);
     for (i=0; i<motorMax; i++)gpio_mode(motorPins[i], GPIO_IN);
     unmap_periph_mem(&vc_mem);
     unmap_devices(0);
-   
+
 }
 
-void motorImplementationSendThrottles(int motorPins[], int motorMax, double motorThrottle[]) {
+void motorImplementationSendThrottles(int motorPins[], int motorMax, double motorThrottle[], int telemetryMotor) {
     int         i;
     unsigned    frame[DSHOT_NUM_PINS+1];
     int         val;
@@ -542,10 +542,10 @@ void motorImplementationSendThrottles(int motorPins[], int motorMax, double moto
     assert(motorMax < DSHOT_NUM_PINS);
 
     for(i=0; i<motorMax; i++) {
-	// translate double throttles ranging <0, 1> to dshot frames.
-	val = motorThrottle[i] * 1999 + 48;
+        // translate double throttles ranging <0, 1> to dshot frames.
+        val = motorThrottle[i] * 1999 + 48;
         if (val < 48 || val >= 2048) val = DSHOT_CMD_MOTOR_STOP;
-        frame[i] = dshotAddChecksumAndTelemetry(val, 0);
+        frame[i] = dshotAddChecksumAndTelemetry(val, i==telemetryMotor);
     }
 
     dshotSendFrames(motorPins, motorMax, frame);
